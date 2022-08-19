@@ -6,7 +6,13 @@ import (
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"github.com/svilenkomitov/rental-service/internal/rental-service/handler"
+	"github.com/svilenkomitov/rental-service/internal/rental-service/repository"
 	"github.com/svilenkomitov/rental-service/internal/storage"
+)
+
+const (
+	FetchRentalByIdEndpoint = "/rentals/{id}"
 )
 
 type Server struct {
@@ -23,6 +29,15 @@ func NewServer(c *Config, db *storage.Database) *Server {
 
 func setUpRouting(db *storage.Database) *mux.Router {
 	router := mux.NewRouter()
+
+	repository := repository.NewRepository(db)
+	handler := handler.NewHandler(repository)
+
+	router.NewRoute().
+		Methods(http.MethodGet).
+		Path(FetchRentalByIdEndpoint).
+		HandlerFunc(handler.FetchRentalById)
+
 	return router
 }
 

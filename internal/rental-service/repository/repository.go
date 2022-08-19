@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/svilenkomitov/rental-service/internal/storage"
 )
 
@@ -31,8 +30,9 @@ func (e *RentalNotFoundError) Error() string {
 	return e.msg
 }
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . Repository
 type Repository interface {
-	FetchRental(id int) (*Entity, error)
+	FetchRentalById(id int) (*Entity, error)
 }
 
 type defaultRepository struct {
@@ -45,13 +45,12 @@ func NewRepository(db *storage.Database) Repository {
 	}
 }
 
-func (r *defaultRepository) FetchRental(id int) (*Entity, error) {
+func (r *defaultRepository) FetchRentalById(id int) (*Entity, error) {
 	var entity Entity
 	if err := r.db.DB.Get(&entity, fetchRentalByIdQuery, id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, NewRentalNotFoundError(id)
 		} else {
-			log.Errorf("Error occurred while fetching rental with id [%d]: %v", id, err)
 			return nil, err
 		}
 	}
