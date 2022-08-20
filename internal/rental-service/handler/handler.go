@@ -65,8 +65,8 @@ func (handler *Handler) FetchRentals(resp http.ResponseWriter, req *http.Request
 	_validate(validQueries, &invalidQueries, req, repository.LIMIT_KEY, _toInt)
 	_validate(validQueries, &invalidQueries, req, repository.OFFSET_KEY, _toInt)
 	_validate(validQueries, &invalidQueries, req, repository.IDS_KEY, _toIntArray)
-	_validate(validQueries, &invalidQueries, req, repository.NEAR_KEY, _toFloatArray) // TODO: makepoint does not exist; add db required ext check
-	_validate(validQueries, &invalidQueries, req, repository.SORT_KEY, _toString)     // TODO: add ASC DSC
+	_validate(validQueries, &invalidQueries, req, repository.NEAR_KEY, _toFloatArray)
+	_validate(validQueries, &invalidQueries, req, repository.SORT_KEY, _toString) // TODO: add ASC DSC
 
 	if len(invalidQueries) > 0 {
 		log.Errorf("queries validation failed. invalid queries: %v", invalidQueries)

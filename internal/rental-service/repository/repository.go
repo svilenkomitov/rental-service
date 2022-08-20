@@ -19,7 +19,7 @@ const (
 	priceMinConditionQuery = `rentals.price_per_day * rentals.sleeps >= %v`
 	priceMaxConditionQuery = `rentals.price_per_day * rentals.sleeps <= %v`
 	idsInConditionQuery    = "rentals.id IN (%v)"
-	nearConditionQuery     = "st_distance(geography(st_makepoint(rentals.lng,rentals.lat)), geography(st_makepoint(%v))) * 0.000621371192 < 100" // TODO: extract constant
+	nearConditionQuery     = "st_distance(geography(st_makepoint(rentals.lat,rentals.lng)), geography(st_makepoint(%v))) * 0.000621371192 < 100" // TODO: extract constant
 )
 
 const (
