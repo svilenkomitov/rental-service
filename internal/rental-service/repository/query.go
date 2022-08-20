@@ -2,18 +2,17 @@ package repository
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 )
 
 type DBClause string
 
 const (
-	WHERE    DBClause = "WHERE"
-	LIMIT    DBClause = "LIMIT"
-	OFFSET   DBClause = "OFFSET"
-	ORDER_BY DBClause = "ORDER BY"
-	AND      DBClause = "AND"
+	WHERE    DBClause = " WHERE "
+	LIMIT    DBClause = " LIMIT "
+	OFFSET   DBClause = " OFFSET "
+	ORDER_BY DBClause = " ORDER BY "
+	AND      DBClause = " AND "
 )
 
 type QueryKey string
@@ -28,71 +27,47 @@ const (
 	SORT_KEY      QueryKey = "sort"
 )
 
-type Query []string
+type QueryBuilder struct {
+	selectStatement  string
+	whereConditions  []string
+	whereStatement   string
+	orderByStatement string
+	limitStatement   string
+	offsetStatement  string
+}
 
-var (
-	PRICE_MIN Query = []string{"price_min", string(WHERE), " rentals.price_per_day * rentals.sleeps >= %v "}
-)
+func NewQueryBuilder() *QueryBuilder {
+	return &QueryBuilder{}
+}
 
-func buildQuery(queries map[QueryKey]interface{}) string {
+func (b *QueryBuilder) Select(statement string) *QueryBuilder {
+	b.selectStatement = statement
+	return b
+}
 
-	// TODO: use price_per_day or calculate rentals.price_per_day * rentals.sleeps ?
-	baseQuery := `SELECT rentals.*, users.first_name, users.last_name, rentals.price_per_day * rentals.sleeps as price FROM rentals JOIN users ON rentals.user_id=users.id `
-	sortQuery := ""
-	limitQuery := ""
-	offsetQuery := ""
+func (b *QueryBuilder) Where(condition string) *QueryBuilder {
+	b.whereConditions = append(b.whereConditions, condition)
+	return b
+}
 
-	whereConditions := []string{}
+func (b *QueryBuilder) OrderBy(key string) *QueryBuilder {
+	b.orderByStatement = string(ORDER_BY) + fmt.Sprintf("%s", key)
+	return b
+}
 
-	for key, value := range queries {
-		switch key {
-		case PRICE_MIN_KEY:
-			{
-				whereConditions = append(whereConditions, fmt.Sprintf(" rentals.price_per_day * rentals.sleeps >= %v ", value))
-			}
-		case PRICE_MAX_KEY:
-			{
-				whereConditions = append(whereConditions, fmt.Sprintf(" rentals.price_per_day * rentals.sleeps <= %v ", value))
-			}
-		case IDS_KEY:
-			{
-				var ids []string
-				for _, i := range value.([]int) {
-					ids = append(ids, strconv.Itoa(i))
-				}
+func (b *QueryBuilder) Limit(value int) *QueryBuilder {
+	b.limitStatement = string(LIMIT) + fmt.Sprintf("%d", value)
+	return b
+}
 
-				v := strings.Join(ids, ", ")
-				whereConditions = append(whereConditions, fmt.Sprintf(" rentals.id IN (%v) ", v))
-			}
-		case NEAR_KEY:
-			{
-				var near []string
-				for _, i := range value.([]float64) { // TODO: do not loop (order is important)
-					near = append(near, fmt.Sprintf("%f", i))
-				}
+func (b *QueryBuilder) Offset(value int) *QueryBuilder {
+	b.offsetStatement = string(OFFSET) + fmt.Sprintf("%d", value)
+	return b
+}
 
-				v := strings.Join(near, ", ")
-				whereConditions = append(whereConditions, fmt.Sprintf(" st_distance(geography(st_makepoint(rentals.lng,rentals.lat)), geography(st_makepoint(%v))) * 0.000621371192 < 100 ", v))
-			}
-		case SORT_KEY:
-			{
-				sortQuery += string(ORDER_BY) + fmt.Sprintf(" %v ", value)
-			}
-		case LIMIT_KEY:
-			{
-				limitQuery += string(LIMIT) + fmt.Sprintf(" %v ", value)
-			}
-		case OFFSET_KEY:
-			{
-				offsetQuery += string(OFFSET) + fmt.Sprintf(" %v ", value)
-			}
-		}
+func (b *QueryBuilder) Build() string {
+	if len(b.whereConditions) > 0 {
+		b.whereStatement = string(WHERE) + strings.Join(b.whereConditions, string(AND))
 	}
-
-	var whereQuery string
-	if len(whereConditions) > 0 {
-		whereQuery = string(WHERE) + strings.Join(whereConditions, string(AND))
-	}
-
-	return baseQuery + whereQuery + sortQuery + limitQuery + offsetQuery
+	return b.selectStatement + b.whereStatement + b.orderByStatement + b.limitStatement + b.offsetStatement
 }

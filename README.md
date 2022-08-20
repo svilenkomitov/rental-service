@@ -13,3 +13,9 @@ $ go generate ./...
 $ go run cmd/main.go
 ```
 
+# Run Tests
+
+```
+$ go test ./...
+```
+
