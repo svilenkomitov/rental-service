@@ -24,6 +24,4 @@ func TestQuery_buildQuery(t *testing.T) {
 
 		assert.Equal(t, expected, actual)
 	})
-
-	// TODO: add more tests
 }

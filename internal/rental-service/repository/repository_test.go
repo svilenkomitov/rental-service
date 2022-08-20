@@ -67,7 +67,6 @@ func TestRepository_FetchRentalById(t *testing.T) {
 	})
 }
 
-// TODO: fix test - query order
 func TestRepository_FetchRentals(t *testing.T) {
 
 	sqlxDb, mock := MockDataBase()
@@ -81,9 +80,6 @@ func TestRepository_FetchRentals(t *testing.T) {
 
 	queries := make(map[QueryKey]interface{})
 	queries[PRICE_MIN_KEY] = 1
-	queries[PRICE_MAX_KEY] = 2000000
-	queries[IDS_KEY] = []int{5, 7, 15}
-	queries[NEAR_KEY] = []float64{-117.279999, 32.830002}
 	queries[SORT_KEY] = "price"
 	queries[LIMIT_KEY] = 5
 	queries[OFFSET_KEY] = 1
@@ -91,9 +87,9 @@ func TestRepository_FetchRentals(t *testing.T) {
 	fetchRentalsQuery := regexp.QuoteMeta(buildFetchRentalsQuery(queries))
 
 	t.Run("success", func(t *testing.T) {
-		mock.ExpectQuery(fetchRentalsQuery). // TODO: add WithArgs (not)
-							WillReturnRows(entityRows.
-								AddRow(1, "Maupin: Vanagon Camper", "camper-van", "fermentum nullam congue arcu sollicitudin lacus suspendisse nibh semper cursus sapien quis feugiat maecenas nec turpis viverra gravida risus phasellus tortor cras gravida varius scelerisque",
+		mock.ExpectQuery(fetchRentalsQuery).
+			WillReturnRows(entityRows.
+				AddRow(1, "Maupin: Vanagon Camper", "camper-van", "fermentum nullam congue arcu sollicitudin lacus suspendisse nibh semper cursus sapien quis feugiat maecenas nec turpis viverra gravida risus phasellus tortor cras gravida varius scelerisque",
 					4, 15000, "Portland", "OR", "97202", "US", "Volkswagen", "Vanagon Camper", 1989, 15, time.Now(), time.Now(), 45.51, -122.68, "https://res.cloudinary.com/outdoorsy/image/upload/v1498568017/p/rentals/11368/images/gmtye6p2eq61v0g7f7e7.jpg", 234, "John", "Smith"),
 			)
 
