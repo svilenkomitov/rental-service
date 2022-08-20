@@ -58,11 +58,10 @@ The rental object JSON in the response should have the following structure:
 
 ```
 $ docker-compose up --build -d
-
 $ curl -i "http://localhost:3000/rentals"
 ```
 
-# Execute Tests
+## Execute Tests
 
 ```
 $ go generate ./... 
