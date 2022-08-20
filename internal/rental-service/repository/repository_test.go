@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/svilenkomitov/rental-service/internal/storage"
 )
 
 func TestRepository_FetchRentalById(t *testing.T) {
 
-	sqlxDb, mock := MockDataBase()
+	sqlxDb, mock := _mockDataBase()
 	repository := NewRepository(&storage.Database{DB: sqlxDb})
 
 	entityRows := sqlmock.NewRows([]string{"user_id", "name", "type",
@@ -69,7 +70,7 @@ func TestRepository_FetchRentalById(t *testing.T) {
 
 func TestRepository_FetchRentals(t *testing.T) {
 
-	sqlxDb, mock := MockDataBase()
+	sqlxDb, mock := _mockDataBase()
 	repository := NewRepository(&storage.Database{DB: sqlxDb})
 
 	entityRows := sqlmock.NewRows([]string{"user_id", "name", "type",
@@ -120,4 +121,13 @@ func TestRepository_FetchRentals(t *testing.T) {
 			t.Errorf("there were unfulfilled expectations: %v", err)
 		}
 	})
+}
+
+func _mockDataBase() (*sqlx.DB, sqlmock.Sqlmock) {
+	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+	if err != nil {
+		panic("Failed to mock database: " + err.Error())
+	}
+	sqlxDb := sqlx.NewDb(db, "sqlmock")
+	return sqlxDb, mock
 }

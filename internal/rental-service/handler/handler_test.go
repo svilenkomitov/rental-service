@@ -15,14 +15,11 @@ import (
 
 const (
 	FetchRentalByIdEndpoint = "/rentals/{id}"
+	FetchRentalsEndpoint    = "/rentals"
 )
 
-func TestHandler_FetchRentalById(t *testing.T) {
-	repository := repositoryfakes.FakeRepository{}
-	handler := NewHandler(&repository)
-	router := mux.NewRouter()
-
-	entity := r.Entity{
+var (
+	entity = r.Entity{
 		Id:              1,
 		Name:            "Maupin: Vanagon Camper",
 		Type:            "camper-van",
@@ -48,7 +45,13 @@ func TestHandler_FetchRentalById(t *testing.T) {
 		PrimaryImageURL: "https://res.cloudinary.com/outdoorsy/image/upload/v1498568017/p/rentals/11368/images/gmtye6p2eq61v0g7f7e7.jpg",
 	}
 
-	rental := _mapToDomain(&entity)
+	rental = _mapToDomain(&entity)
+)
+
+func TestHandler_FetchRentalById(t *testing.T) {
+	repository := repositoryfakes.FakeRepository{}
+	handler := NewHandler(&repository)
+	router := mux.NewRouter()
 
 	t.Run("success", func(t *testing.T) {
 		repository.FetchRentalByIdReturns(&entity, nil)
@@ -80,7 +83,47 @@ func TestHandler_FetchRentalById(t *testing.T) {
 
 		resp, _ := http.Get(server.URL + "/rentals/1")
 
-		Verify(t, resp, http.StatusNotFound, MimeApplicationJson, "\"rental not found\"")
+		Verify(t, resp, http.StatusNotFound, MimeApplicationJson, "\"rental with id [1] not found\"")
+	})
+}
+
+func TestHandler_FetchRentals(t *testing.T) {
+	repository := repositoryfakes.FakeRepository{}
+	handler := NewHandler(&repository)
+	router := mux.NewRouter()
+
+	t.Run("success", func(t *testing.T) {
+		repository.FetchRentalsReturns([]*r.Entity{&entity}, nil)
+		router.HandleFunc(FetchRentalsEndpoint, handler.FetchRentals)
+		server := httptest.NewServer(router)
+		defer server.Close()
+
+		resp, _ := http.Get(server.URL + "/rentals")
+		expectedBody, _ := json.Marshal([]*Rental{rental})
+
+		Verify(t, resp, http.StatusOK, MimeApplicationJson, string(expectedBody))
+	})
+
+	t.Run("unsupported query", func(t *testing.T) {
+		repository.FetchRentalsReturns([]*r.Entity{}, nil)
+		router.HandleFunc(FetchRentalsEndpoint, handler.FetchRentals)
+		server := httptest.NewServer(router)
+		defer server.Close()
+
+		resp, _ := http.Get(server.URL + "/rentals?unsuported_query=1")
+
+		Verify(t, resp, http.StatusBadRequest, MimeApplicationJson, string("\"unsupported query param [unsuported_query]\""))
+	})
+
+	t.Run("invalid query value", func(t *testing.T) {
+		repository.FetchRentalsReturns([]*r.Entity{}, nil)
+		router.HandleFunc(FetchRentalsEndpoint, handler.FetchRentals)
+		server := httptest.NewServer(router)
+		defer server.Close()
+
+		resp, _ := http.Get(server.URL + "/rentals?price_min=-1&price_max=a")
+
+		Verify(t, resp, http.StatusBadRequest, MimeApplicationJson, string("\"invalid queries values: [price_min price_max]\""))
 	})
 }
 

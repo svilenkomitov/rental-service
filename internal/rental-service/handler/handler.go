@@ -48,7 +48,7 @@ func (handler *Handler) FetchRentalById(resp http.ResponseWriter, req *http.Requ
 	if err != nil {
 		log.Errorf("Error occurred while fetching rental with id [%d]: %v", id, err)
 		if _, ok := err.(*repository.RentalNotFoundError); ok {
-			_writeJsonResponse(resp, http.StatusNotFound, "rental not found")
+			_writeJsonResponse(resp, http.StatusNotFound, fmt.Sprintf("rental with id [%d] not found", id))
 			return
 		}
 		_writeJsonResponse(resp, http.StatusInternalServerError, "internal server error")
@@ -59,7 +59,6 @@ func (handler *Handler) FetchRentalById(resp http.ResponseWriter, req *http.Requ
 }
 
 func (handler *Handler) FetchRentals(resp http.ResponseWriter, req *http.Request) {
-
 	if err := _validateSupportedQueries(req); err != nil {
 		_writeJsonResponse(resp, http.StatusBadRequest, err.Error())
 		return
@@ -77,8 +76,8 @@ func (handler *Handler) FetchRentals(resp http.ResponseWriter, req *http.Request
 	_validate(validQueries, &invalidQueries, req, repository.SORT_KEY, _toString)
 
 	if len(invalidQueries) > 0 {
-		log.Errorf("queries validation failed. invalid queries: %v", invalidQueries)
-		_writeJsonResponse(resp, http.StatusBadRequest, fmt.Sprintf("invalid queries: %v", invalidQueries))
+		log.Errorf("queries validation failed. invalid queries values: %v", invalidQueries)
+		_writeJsonResponse(resp, http.StatusBadRequest, fmt.Sprintf("invalid queries values: %v", invalidQueries))
 		return
 	}
 
@@ -111,7 +110,7 @@ func _writeJsonResponse(w http.ResponseWriter, code int, resp interface{}) {
 }
 
 func _validateSupportedQueries(req *http.Request) error {
-	for key, _ := range req.URL.Query() {
+	for key := range req.URL.Query() {
 		if !_isSupportedQuery(supportedQueries, key) {
 			return errors.New(fmt.Sprintf("unsupported query param [%s]", key))
 		}
