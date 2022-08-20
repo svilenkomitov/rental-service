@@ -13,6 +13,7 @@ import (
 
 const (
 	FetchRentalByIdEndpoint = "/rentals/{id}"
+	FetchRentalsEndpoint    = "/rentals"
 )
 
 type Server struct {
@@ -37,6 +38,11 @@ func setUpRouting(db *storage.Database) *mux.Router {
 		Methods(http.MethodGet).
 		Path(FetchRentalByIdEndpoint).
 		HandlerFunc(handler.FetchRentalById)
+
+	router.NewRoute().
+		Methods(http.MethodGet).
+		Path(FetchRentalsEndpoint).
+		HandlerFunc(handler.FetchRentals)
 
 	return router
 }
