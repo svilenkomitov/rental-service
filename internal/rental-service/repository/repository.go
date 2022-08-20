@@ -33,6 +33,7 @@ func (e *RentalNotFoundError) Error() string {
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . Repository
 type Repository interface {
 	FetchRentalById(id int) (*Entity, error)
+	FetchRentals(queries map[QueryKey]interface{}) ([]*Entity, error)
 }
 
 type defaultRepository struct {
@@ -55,4 +56,12 @@ func (r *defaultRepository) FetchRentalById(id int) (*Entity, error) {
 		}
 	}
 	return &entity, nil
+}
+
+func (r *defaultRepository) FetchRentals(queries map[QueryKey]interface{}) ([]*Entity, error) {
+	var entities []*Entity
+	if err := r.db.DB.Select(&entities, buildQuery(queries)); err != nil {
+		return []*Entity{}, err
+	}
+	return entities, nil
 }
