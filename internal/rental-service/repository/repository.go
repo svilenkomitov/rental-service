@@ -9,6 +9,9 @@ import (
 )
 
 const (
+	METER_TO_MILES = 0.000621371192
+	MAX_MILES      = 100
+
 	fetchRentalByIdQuery = `SELECT rentals.*, users.first_name, users.last_name, 
 	rentals.price_per_day * rentals.sleeps AS price 
 	FROM rentals JOIN users ON rentals.user_id=users.id
@@ -19,7 +22,7 @@ const (
 	priceMinConditionQuery = `rentals.price_per_day * rentals.sleeps >= %v`
 	priceMaxConditionQuery = `rentals.price_per_day * rentals.sleeps <= %v`
 	idsInConditionQuery    = "rentals.id IN (%v)"
-	nearConditionQuery     = "st_distance(geography(st_makepoint(rentals.lat,rentals.lng)), geography(st_makepoint(%v))) * 0.000621371192 < 100" // TODO: extract constant
+	nearConditionQuery     = "st_distance(geography(st_makepoint(rentals.lat,rentals.lng)), geography(st_makepoint(%v))) * %f < %d"
 )
 
 const (
@@ -86,7 +89,7 @@ func buildFetchRentalsQuery(queries map[QueryKey]interface{}) string {
 		case IDS_KEY:
 			query.Where(fmt.Sprintf(idsInConditionQuery, joinIntArr(value.([]int))))
 		case NEAR_KEY:
-			query.Where(fmt.Sprintf(nearConditionQuery, joinFloatArr(value.([]float64))))
+			query.Where(fmt.Sprintf(nearConditionQuery, joinFloatArr(value.([]float64)), METER_TO_MILES, MAX_MILES))
 		case SORT_KEY:
 			query.OrderBy(value.(string))
 		case LIMIT_KEY:

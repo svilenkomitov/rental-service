@@ -21,6 +21,11 @@ const (
 	MimeApplicationJson = "application/json"
 )
 
+var supportedQueries = []repository.QueryKey{
+	repository.PRICE_MIN_KEY, repository.PRICE_MAX_KEY, repository.IDS_KEY,
+	repository.NEAR_KEY, repository.LIMIT_KEY, repository.OFFSET_KEY, repository.SORT_KEY,
+}
+
 type Handler struct {
 	repository repository.Repository
 }
@@ -55,7 +60,10 @@ func (handler *Handler) FetchRentalById(resp http.ResponseWriter, req *http.Requ
 
 func (handler *Handler) FetchRentals(resp http.ResponseWriter, req *http.Request) {
 
-	// TODO: validate supported queries
+	if err := _validateSupportedQueries(req); err != nil {
+		_writeJsonResponse(resp, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	validQueries := make(map[repository.QueryKey]interface{})
 	invalidQueries := make([]repository.QueryKey, 0)
@@ -66,7 +74,7 @@ func (handler *Handler) FetchRentals(resp http.ResponseWriter, req *http.Request
 	_validate(validQueries, &invalidQueries, req, repository.OFFSET_KEY, _toInt)
 	_validate(validQueries, &invalidQueries, req, repository.IDS_KEY, _toIntArray)
 	_validate(validQueries, &invalidQueries, req, repository.NEAR_KEY, _toFloatArray)
-	_validate(validQueries, &invalidQueries, req, repository.SORT_KEY, _toString) // TODO: add ASC DSC
+	_validate(validQueries, &invalidQueries, req, repository.SORT_KEY, _toString)
 
 	if len(invalidQueries) > 0 {
 		log.Errorf("queries validation failed. invalid queries: %v", invalidQueries)
@@ -100,6 +108,24 @@ func _writeJsonResponse(w http.ResponseWriter, code int, resp interface{}) {
 	}
 
 	_, _ = w.Write(data)
+}
+
+func _validateSupportedQueries(req *http.Request) error {
+	for key, _ := range req.URL.Query() {
+		if !_isSupportedQuery(supportedQueries, key) {
+			return errors.New(fmt.Sprintf("unsupported query param [%s]", key))
+		}
+	}
+	return nil
+}
+
+func _isSupportedQuery(supportedQueries []repository.QueryKey, query string) bool {
+	for _, s := range supportedQueries {
+		if string(s) == query {
+			return true
+		}
+	}
+	return false
 }
 
 type toFunc func(string) (interface{}, bool)
@@ -160,11 +186,13 @@ func _toString(str string) (interface{}, bool) {
 }
 
 func _toInt(str string) (interface{}, bool) {
-	//TODO: validate negative numbers
 	i, err := strconv.Atoi(str)
 	if err != nil {
 		log.Debugf("Error occurred while parsing toInt [%s]: %v", str, err)
 		return nil, false
+	} else if i < 0 {
+		log.Debugf("negative numbers are not allowed [%d].", i)
+		return i, false
 	}
 	return i, true
 }
