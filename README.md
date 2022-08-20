@@ -3,19 +3,14 @@
 # Run
 
 ```
-$ export DB_HOST=localhost 
-$ export DB_PORT=5432 
-$ export DB_USER=postgres 
-$ export DB_PASSWORD=postgres
-$ export DB_NAME=postgres
+$ docker-compose up --build -d
 
-$ go generate ./... 
-$ go run cmd/main.go
+$ curl -i "http://localhost:3000/rentals/1"
 ```
 
 # Run Tests
 
 ```
+$ go generate ./... 
 $ go test ./...
 ```
-

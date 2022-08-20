@@ -1,0 +1,31 @@
+version: '3.6'
+services:
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    environment:
+      - WAIT_HOSTS=postgres:5432
+      - SERVER_PORT=3000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=root
+      - DB_PASS=root
+      - DB_NAME=testingwithrentals
+    ports:
+      - "3000:3000"
+    expose:
+      - 3000
+  postgres:
+    image: mdillon/postgis:11
+    hostname: postgres
+    restart: always
+    environment:
+      - DATABASE_HOST=127.0.0.1
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=testingwithrentals
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./sql-init.sql:/docker-entrypoint-initdb.d/sql-init.sql
